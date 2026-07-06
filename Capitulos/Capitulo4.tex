@@ -1,2 +1,50 @@
-\chapter{Análise e Discussão}
+\chapter{Projeto do Estudo de Avaliação}
 \label{cap:cap4}
+
+Esta seção detalha o planejamento experimental para validar a arquitetura proposta, visando demonstrar sua viabilidade técnica, econômica e seu impacto operacional.
+
+\section{Objetivo e Tipo do Estudo}
+O presente trabalho classifica-se metodologicamente como uma Pesquisa Experimental Aplicada, uma vez que envolve o desenvolvimento e a avaliação quantitativa de um protótipo de hardware e software (teste de hipótese técnica). Contudo, a estratégia de validação adotada é o Estudo de Caso, aplicado ao cenário real da Barragem de Oiticica (RN).
+
+O objetivo do estudo é duplo:
+\begin{itemize}
+    \item \textbf{Experimental:} avaliar métricas de desempenho do sistema na arquitetura proposta;
+    \item \textbf{Contextual (Estudo de Caso):} Validar a aplicabilidade da solução frente aos desafios ambientais e operacionais específicos do semiárido brasileiro.
+\end{itemize}
+
+\section{Questões de Pesquisa (QPs)}
+Para guiar a avaliação, foram definidas quatro questões de pesquisa:
+\begin{itemize}
+    \item \textbf{QP1 (Eficácia da IA):} o modelo de visão computacional (YOLO) executado na borda apresenta métricas de precisão e revogação (recall) adequadas para a identificação confiável de fissuras em estruturas de concreto, comparado à inspeção manual ou processamento em servidor robusto?
+    \item \textbf{QP2 (Desempenho de Hardware):} a arquitetura de hardware proposta (Raspberry Pi 5) consegue manter uma taxa de inferência (FPS) útil para monitoramento em tempo real, mantendo a temperatura e o consumo energético dentro de limites operacionais seguros em ambiente externo?
+    \item \textbf{QP3 (Eficiência de Rede):} qual é a redução percentual no consumo de largura de banda ao transmitir apenas metadados (via MQTT ou HTML) e manter streaming de vídeo e processamento de imagens em edge computing, e essa redução viabiliza a operação via LoRa e 4G instável/Satélite?
+    \item \textbf{QP4 (Impacto na Gestão):} A integração de dados em dashboard com atualização em tempo real traduz-se em benefícios tangíveis para a gestão hídrica, acelerando a identificação de falhas e fundamentando decisões mais assertivas?
+\end{itemize}
+
+\section{Instrumentos e Métricas}
+Será realizada uma avaliação quantitativa, baseada na coleta de métricas do sistema e do modelo durante a execução do protótipo:
+\begin{itemize}
+    \item \textbf{A. Eficácia (QP1):} serão coletadas métricas de mAP (mean Average Precision), F1-Score, Precisão e Recall do modelo treinado com o dataset proprietário, utilizando uma matriz de confusão sobre um conjunto de teste (imagens não usadas no treino);
+    \item \textbf{B. Desempenho (QP2):} um script de profiling será executado em paralelo no Raspberry Pi 5 para registrar de forma temporal: tempo de inferência (milissegundos), uso de CPU e Memória RAM (\%), temperatura do processador (ºC) e consumo energético estimado (Watts);
+    \item \textbf{C. Rede (QP3):} será medido o volume de dados trafegados (em bytes) em dois cenários distintos durante um período de 1 hora:
+    \begin{itemize}
+        \item \textit{Cloud Computing:} envio contínuo do stream de vídeo ou envio de todas as imagens capturadas para a nuvem para processamento remoto;
+        \item \textit{Edge Computing:} processamento local das imagens e envio apenas de pacotes JSON via MQTT ou HTML quando uma anomalia é detectada.
+    \end{itemize}
+    \item \textbf{D. Avaliação de Impacto e Usabilidade (QP4):} será aplicado um questionário (survey) direcionado à equipe técnica e gestores de recursos hídricos, baseado no Modelo de Aceitação Tecnológica (TAM). O instrumento será um formulário com escala Likert (1 a 5) avaliando critérios como "Facilidade de Uso", "Utilidade Percebida" e "Confiança na Decisão".
+\end{itemize}
+
+\section{Procedimento do Estudo}
+O experimento seguiu cronologicamente as etapas de execução descritas nas seções subsequentes.
+
+\subsection{Treinamento e Validação}
+O treinamento do modelo YOLO, com o dataset de 650 imagens anotadas no Roboflow, foi realizado e validado em laboratório, num laptop com GPU NVIDIA GeForce RTX 3050 e 6GB de VRAM. O dataset inicial contava com imagens de 3264x2448 pixels de dimensão, o que impossibilitava o seu processamento direto por meio do YOLO, que aceita imagens menores, exigindo diferentes estratégias de adequação. Foram realizados 12 treinamentos, em 200 epochs cada, variando proporções e parâmetros.
+
+\subsection{Implantação em Campo (Piloto)}
+A construção dos controladores e gateways IoT baseou-se na arquitetura de 32 bits dos chips ESP32, devido à sua eficiência energética e de processamento, enquanto o processamento de imagens ficou a cargo do controlador Raspberry Pi 5 com Hailo-8L. O ESP32 possibilitou o uso de um Sistema Operacional de Tempo Real (RTOS). Para a comunicação M2M, foi definida a tecnologia LoRa (915 MHz), com testes iniciais demonstrando alcance de 600 metros sem visada direta.
+
+\subsection{Avaliação com Usuários e Análise Comparativa}
+Envolve a apresentação do sistema funcional (dashboards) aos gestores e aplicação do questionário de validação. Com o intuito de discutir a viabilidade financeira do projeto, será realizado um levantamento dos custos históricos de viagens das equipes de fiscalização em comparação com os custos estimados para a implementação e manutenção do sistema proposto.
+
+\section{Contexto do Estudo}
+O sistema alvo do projeto é o monitoramento estrutural e hídrico de barragens no semiárido, e a barragem de Oiticica (RN) foi o ambiente real escolhido. Caracterizada por sua grande dimensão, isolamento geográfico e conectividade limitada, a barragem conta com uma parede de concreto de aproximadamente 1.700 metros de extensão. A infraestrutura atual, embora rica em sensores físicos, baseia-se em coleta analógica, limitando a escalabilidade do monitoramento.

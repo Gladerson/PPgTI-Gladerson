@@ -1,3 +1,34 @@
-\chapter{Desenvolvimento}
+\chapter{Abordagem Proposta}
 \label{cap:cap3}
-Capítulo \ref{cap:cap3} - Desenvolvimento do Trabalho.
+
+A metodologia deste trabalho adota uma abordagem experimental aplicada (prototipagem), dividida em camadas de percepção, processamento, comunicação e aplicação. O estudo de caso é realizado na Barragem de Oiticica (RN). Inicialmente, foram avaliadas opções locais de conectividade (rádio, fibra óptica e satélite Starlink) e definiu-se o esboço da arquitetura, que engloba a adoção da plataforma ThingsBoard para gestão, um sistema de vídeo monitoramento com suporte aos protocolos ONVIF e RTSP, controladores IoT com hardware de código aberto (Open Source) e comunicação de dados via satélite e sinal LTE (Long Term Evolution).
+
+\section{Arquitetura de Hardware e Percepção}
+O sistema é composto por dois módulos principais de coleta de dados:
+\begin{itemize}
+    \item \textbf{Monitoramento Hídrico:} utiliza-se um sensor de nível via radar (modelo KD-908) controlado por microcontroladores ESP32. Esta escolha deve-se ao baixo consumo energético e robustez do radar em ambientes externos, superior a sensores ultrassônicos convencionais;
+    \item \textbf{Monitoramento Estrutural (Visão Computacional):} uma câmera IP (ou drone, em inspeções pontuais) captura imagens da parede da barragem e transmite-as via protocolo RTSP (Real Time Streaming Protocol) para a unidade de processamento local.
+\end{itemize}
+
+\section{Processamento na Borda (Edge Computing)}
+O processamento de imagens é realizado por meio de um microcomputador de placa única, especificamente um Raspberry Pi 5 munido de uma NPU (Unidade de Processamento Neural) Hailo-8L. Este hardware foi selecionado por oferecer o equilíbrio necessário entre custo e capacidade computacional para executar redes neurais.
+\begin{itemize}
+    \item \textbf{Algoritmo:} utiliza-se a arquitetura YOLO (You Only Look Once) para detecção de objetos. O modelo é treinado para identificar a classe "rachadura" (crack) em superfícies de concreto;
+    \item \textbf{Dataset:} foi construído um dataset proprietário contendo 650 imagens de fissuras reais coletadas na estrutura da Barragem de Oiticica. Essas imagens foram anotadas (labeling) por meio da ferramenta de visão computacional chamada Roboflow, para o treinamento supervisionado da rede;
+    \item \textbf{Estratégia de Processamento:} para contornar a limitação de conectividade, o vídeo não é enviado à nuvem. O hardware processa o stream localmente. Ao detectar uma falha com grau de confiança satisfatório, o sistema recorta o frame, registra as coordenadas e gera um alerta leve (texto/JSON) para envio.
+\end{itemize}
+
+\section{Comunicação e Redes}
+Devido à localização remota de onde o projeto foi implementado, foi definida uma rede híbrida:
+\begin{itemize}
+    \item \textbf{Rede Local (LAN):} a comunicação entre os dispositivos e o gateway ocorre via Ethernet ou rede LoRa (Long Range), garantindo alcance em áreas extensas da barragem sem depender de infraestrutura de telecomunicações externa;
+    \item \textbf{Rede Externa (WAN):} a comunicação com o servidor remoto ocorre via modem 4G ou link satelital;
+    \item \textbf{Protocolo:} utiliza-se o protocolo MQTT (Message Queuing Telemetry Transport) devido ao seu baixo overhead e capacidade de operar em redes instáveis, também sendo viável utilizar o protocolo HTTP (HyperText Transfer Protocol), devido sua alta compatibilidade e interoperabilidade com APIs RESTful e plataformas web convencionais.
+\end{itemize}
+
+\section{Aplicação e Visualização (Dashboard 3D)}
+Este trabalho adota plataformas de mercado consolidadas para IoT, como ThingsBoard ou OpenRemote, para a gestão dos dados escalares (como nível da água, carga das baterias e status dos sensores). Para a visualização estrutural, foi desenvolvido um dashboard utilizando a biblioteca JavaScript Three.js:
+\begin{itemize}
+    \item Um modelo 3D fiel da Barragem de Oiticica foi gerado através de fotogrametria com imagens de drone processadas no software WebODM;
+    \item O sistema utiliza as coordenadas ONVIF (Open Network Video Interface Forum) de uma câmera (PTZ ou fixa) para calcular a triangulação visual. Quando o algoritmo YOLO detecta uma rachadura, o sistema mapeia a posição do pixel na imagem 2D para a coordenada geográfica (latitude/longitude) correspondente no modelo 3D, plotando o alerta no local exato da estrutura virtual.
+\end{itemize}
